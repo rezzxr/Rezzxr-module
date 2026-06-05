@@ -1,0 +1,15 @@
+SKIPUNZIP=0
+
+ui_print "**************************************"
+ui_print "    .--.                              "
+ui_print "   |o_o |                             "
+ui_print "   |:_/ |                             "
+ui_print "  //   \ \                            "
+ui_print " (|     | )                           "
+ui_print " /'\_   _/\`\                         "
+ui_print " \___)=(___/                          "
+ui_print "                                      "
+ui_print "        [ POWERED BY REZZXR ]         "
+ui_print "**************************************"
+ui_print "- Аппаратный разгон uclamp до 1.00..."
+ui_print "- Подавление троттлинга mtk_fpsgo..."

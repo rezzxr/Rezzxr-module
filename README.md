@@ -1,33 +1,29 @@
-# ⚡ Rezzxr-module (v1.1 - Master Edition)
-
-An ultimate lightweight multi-profile systemless module for **KernelSU-Next / Magisk / APatch**, engineered specifically to control hardware behaviors on **MediaTek Helio G99** devices. Fully optimized for **Transsion (Tecno / Infinix)** ecosystem and tested on **Tecno Pova 6 Neo (Li6)** running GSI Android 16 with WildKernel + SusFS.
+⚡ Rezzxr-module (v1.3 - Optimized & Safe Edition)
+An ultimate lightweight multi-profile systemless module for KernelSU-Next / Magisk / APatch, engineered specifically to control hardware behaviors on MediaTek Helio G99 devices. Fully optimized for Transsion (Tecno / Infinix) ecosystem and tested on Tecno Pova 6 Neo (Li6) running GSI Android 16 with WildKernel + SusFS.
 
 The repository offers two polar-opposite profiles depending on your target workflow.
 
----
+🚀 Profile 1: Performance & Smooth UI Mode (rezzxr_v1.3.zip)
+Target: Intense gaming and buttery-smooth user interface.
 
-## 🚀 Profile 1: Performance & Smooth UI Mode (`rezzxr.1.zip`)
-*Target: Intense gaming and buttery-smooth user interface.*
+* **FPSGO Execution:** Hard throttles the core MediaTek limitation framework (`fpsgo_enable=0`) and locks limits to `9999000` [INDEX]. CPU task management is handed over to pure, unrestricted Linux scheduling algorithms.
+* **Smart Touch Tracker Daemon:** An asynchronous background loop that checks screen activity via `chipone-tddi` interrupts using fast `awk` filtering (scanning CPU0-7 columns). Instantly forces CPU `policy0/6` minimum frequencies to 2.0/2.2GHz and GPU Mali-G57 to 950MHz upon touch, maintaining the boost for 3 seconds [INDEX].
+* **I/O Overnight Protection:** Incorporates `IS_BOOSTED` state validation to eliminate repetitive write operations to sysfs kernel nodes. Frequency commands are sent exactly once per state transition.
+* **Idle Energy Saving:** When screen inactivity exceeds 12 seconds (`IDLE_COUNT >= 4`), minimum CPU frequencies drop back to 500/725MHz and GPU Mali to 390MHz to preserve battery lifespan.
+* **Origin OS Scroll Physics:** Alters configurations (`view.scroll_friction=0.012-0.015` and `ro.max.fling_velocity=7000`) to mirror premium Vivo/iOS kinetic scrolling behavior, adding a pleasant physical weight and inertial deceleration to lists [INDEX].
+* **Safe SurfaceFlinger Lifecycle:** Uses native `setprop ctl.restart surfaceflinger` instead of aggressive `killall -9` process termination, ensuring 100% stable deployment on Android 14, 15, and 16 GSI without triggering gray screen locks or security Apex panics [INDEX].
 
-* **FPSGO Execution:** Hard throttles the core MediaTek limitation framework (`fpsgo_enable=0`). CPU task management is handed over to pure, unrestricted Linux scheduling algorithms.
-* **SurfaceFlinger Triple Buffering:** Forces Android graphics rendering engine to use 3 acquired buffers, completely wiping out shutter lag and micro-stutters during notification panel pulls and quick swipes at 120Hz.
-* **Smart Sleep Daemon:** An asynchronous background loop that checks screen activity every 5 seconds. Instantly drops uclamp values to zero when the screen is OFF (`Asleep`), saving 100% of your battery at night, and snaps back to 1024 on unlock.
-* **Frictionless Scrolling:** Tweaks system scroll friction variables (`view.scroll_friction=0.008`) to deliver an incredibly smooth, fluid, high-refresh-rate scrolling experience.
+🔋 Profile 2: Battery ECO Mode (rezzxr_power.zip)
+Target: Ultimate battery endurance and ice-cold hardware.
 
----
+* **FPSGO Enforcement:** Restores the core MediaTek limitation framework (`fpsgo_enable=1`) and applies strict performance throttling boundaries to drop core temperatures.
+* **PPM Power Save:** Locks MediaTek PPM policies to power-saving mode, forcing the scheduler to utilize power-efficient little cores and restricting sudden CPU frequency spikes.
+* **60Hz Refresh Rate Lock:** Forces the display refresh rate to a stable 60Hz to reduce active graphic engine power consumption.
+* **Aggressive Friction Scrolling:** Increases scroll friction variables to `0.050` to stop scrolling immediately, heavily reducing active GPU drawing overhead.
 
-## 🔋 Profile 2: Battery ECO Mode (`rezzxr_power.zip`)
-*Target: Ultimate battery endurance and ice-cold hardware.*
+🛡️ Hidden Core Features (Both Profiles)
+* **SusFS Ready:** The boot log (`helio_smooth.log`) is isolated inside the secure module directory, preventing data leaks and keeping the system fully invisible to strict Integrity / SafetyNet checks [INDEX].
+* **Android 14, 15 & 16 Compatibility:** Uses a unified script layout to ensure stable deployment across modern custom GSI ROMs without cross-version core execution errors [INDEX].
 
-* **FPSGO Dictatorship:** Forces the core MediaTek limitation framework back ON (`fpsgo_enable=1`) and sets an aggressive throttling trigger at 45°C to instantly chill the CPU.
-* **PPM Power Save:** Locks MediaTek PPM core policies to a strict power-saving mode, forcing the system to utilize energy-efficient little cores and blocking unnecessary CPU clock spikes.
-* **60Hz Refresh Rate Lock:** Drops rendering buffers and restricts the display refresh rate to a steady, battery-friendly 60Hz.
-* **Aggressive Friction Scrolling:** Increases scroll friction variables (`view.scroll_friction=0.050`) to stop list scrolling immediately, heavily reducing GPU drawing overhead.
+🐧 Powered by Velikiy TUX & Pure 100% Shell
 
----
-
-## 🛡️ Hidden Core Features (Both Profiles)
-* **SusFS Ready:** The optimization boot log (`rezzxr_boost.log`) is isolated inside the secure module directory (`/data/adb/modules/...`), keeping your system completely invisible to strict Integrity / Safetynet checks and mobile anti-cheats.
-* **Android 15 & 16 Compatibility:** Uses dual-path uclamp tracking (including `/dev/cpuctl/apps/`) to ensure 100% stable deployment across any modern custom GSI ROM.
-
-## 🐧 Powered by Velikiy TUX & Pure 100% Shell

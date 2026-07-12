@@ -71,24 +71,24 @@ echo "2000000" > /proc/sys/kernel/sched_migration_cost_ns 2>/dev/null
 
 sleep 1
 
-# === БЕЗОПАСНАЯ ГРАФИКА ORIGIN OS PHYSICS ===
+
 resetprop -n debug.sf.disable_client_composition_cache 1
 resetprop -n ro.surface_flinger.uclamp.min "$UCLAMP_MAX"
 resetprop -n vendor.display.fps 120
 resetprop -n ro.surface_flinger.set_idle_timer_ms 10000
 resetprop -n ro.surface_flinger.set_touch_timer_ms 3000
 
-# Настройка вязкого скролла Vivo (Трение + Ограничение безумной скорости "выстрела")
+
 resetprop -n view.scroll_friction 0.015
 resetprop -n ro.max.fling_velocity 7000
 resetprop -n ro.min.fling_velocity 200
 
-# Фрейм-пейсинг и инерция для рендеринга (Убирает микро-дерганья при затухании анимаций)
+
 resetprop -n debug.graphics.game_framerate_log 0
 resetprop -n ro.kernel.android.checkjni 0
 resetprop -n debug.hwui.renderer skiavk
 
-# Агрессивные веса планировщика для SurfaceFlinger
+
 resetprop -n vendor.debug.sf.cpupolicy.lowbound_uclamp_min 1024
 resetprop -n vendor.debug.sf.cpupolicy.min_60 1024
 resetprop -n vendor.debug.sf.cpupolicy.min_90 1024

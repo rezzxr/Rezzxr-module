@@ -1,33 +1,36 @@
 #!/system/bin/sh
 
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
-    sleep 2
+    sleep 5
 done
-sleep 3
+sleep 5
 
 echo "0 0 0 0" > /proc/sys/kernel/printk 2>/dev/null
 
-MODDIR="$(dirname "$(readlink -f "$0")")"
-LOG="$MODDIR/helio_smooth.log"
-echo "=== Helio G99 Animation Overlord v1.4 (Origin OS) $(date) ===" > "$LOG"
+safe_write() {
+    if [ -f "$2" ]; then
+        chmod 644 "$2" 2>/dev/null
+        echo "$1" > "$2" 2>/dev/null
+    fi
+}
 
-if [ -f "/sys/kernel/fpsgo/common/fpsgo_enable" ]; then
-    chmod 644 /sys/kernel/fpsgo/common/fpsgo_enable 2>/dev/null
-    echo "0" > /sys/kernel/fpsgo/common/fpsgo_enable 2>/dev/null
-    chmod 444 /sys/kernel/fpsgo/common/fpsgo_enable 2>/dev/null
-fi
-if [ -f "/sys/kernel/fpsgo/fstb/fpsgo_status" ]; then
-    chmod 644 /sys/kernel/fpsgo/fstb/fpsgo_status 2>/dev/null
-    echo "0" > /sys/kernel/fpsgo/fstb/fpsgo_status 2>/dev/null
-    chmod 444 /sys/kernel/fpsgo/fstb/fpsgo_status 2>/dev/null
-fi
-[ -f "/sys/kernel/fpsgo/fstb/set_cam_active_fpsgo_off" ] && echo "1" > /sys/kernel/fpsgo/fstb/set_cam_active_fpsgo_off 2>/dev/null
+safe_write "60" "/proc/sys/vm/swappiness"
+safe_write "50" "/proc/sys/vm/vfs_cache_pressure"
+safe_write "10" "/proc/sys/vm/dirty_background_ratio"
+safe_write "20" "/proc/sys/vm/dirty_ratio"
+safe_write "500" "/proc/sys/vm/dirty_writeback_centisecs"
+safe_write "3000" "/proc/sys/vm/dirty_expire_centisecs"
+safe_write "0" "/proc/sys/vm/zone_reclaim_mode"
+safe_write "1" "/proc/sys/vm/page-cluster"
 
+for storage in /sys/block/sd* /sys/block/mmcblk*; do
+    [ -d "$storage" ] && safe_write "512" "$storage/queue/read_ahead_kb"
+done
+
+safe_write "1" "/sys/kernel/fpsgo/common/fpsgo_enable"
 for limit in /sys/kernel/fpsgo/fbt/limit_*; do
     [ -f "$limit" ] && echo "9999000" > "$limit" 2>/dev/null
 done
-
-sleep 1
 
 UCLAMP_MAX=100
 if [ -f "/dev/cpuctl/top-app/cpu.uclamp.max" ]; then
@@ -51,95 +54,73 @@ if [ -f "/dev/cpuctl/system/cpu.uclamp.min" ]; then
     chmod 444 "/dev/cpuctl/system/cpu.uclamp.min" 2>/dev/null
 fi
 
-sleep 1
-
 for policy in /sys/devices/system/cpu/cpufreq/policy*; do
     [ -f "$policy/sugov_ext/up_rate_limit_us" ] && echo "0" > "$policy/sugov_ext/up_rate_limit_us" 2>/dev/null
     [ -f "$policy/sugov_ext/down_rate_limit_us" ] && echo "40000" > "$policy/sugov_ext/down_rate_limit_us" 2>/dev/null
 done
-
-if [ -d "/sys/devices/system/cpu/cpufreq/policy0" ]; then
-    echo "2000000" > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq 2>/dev/null
-fi
-if [ -d "/sys/devices/system/cpu/cpufreq/policy6" ]; then
-    echo "2200000" > /sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq 2>/dev/null
-fi
-
-echo "500000" > /proc/sys/kernel/sched_min_granularity_ns 2>/dev/null
-echo "1000000" > /proc/sys/kernel/sched_wakeup_granularity_ns 2>/dev/null
-echo "2000000" > /proc/sys/kernel/sched_migration_cost_ns 2>/dev/null
-
-sleep 1
-
 
 resetprop -n debug.sf.disable_client_composition_cache 1
 resetprop -n ro.surface_flinger.uclamp.min "$UCLAMP_MAX"
 resetprop -n vendor.display.fps 120
 resetprop -n ro.surface_flinger.set_idle_timer_ms 10000
 resetprop -n ro.surface_flinger.set_touch_timer_ms 3000
-
-
 resetprop -n view.scroll_friction 0.015
 resetprop -n ro.max.fling_velocity 7000
 resetprop -n ro.min.fling_velocity 200
-
-
 resetprop -n debug.graphics.game_framerate_log 0
 resetprop -n ro.kernel.android.checkjni 0
 resetprop -n debug.hwui.renderer skiavk
 
+for i in lowbound_uclamp_min min_60 min_90 min_120 upbound_uclamp_min; do
+    resetprop -n vendor.debug.sf.cpupolicy.$i 1024
+done
 
-resetprop -n vendor.debug.sf.cpupolicy.lowbound_uclamp_min 1024
-resetprop -n vendor.debug.sf.cpupolicy.min_60 1024
-resetprop -n vendor.debug.sf.cpupolicy.min_90 1024
-resetprop -n vendor.debug.sf.cpupolicy.min_120 1024
-resetprop -n vendor.debug.sf.cpupolicy.upbound_uclamp_min 1024
-
-sleep 1
-
-[ -f "/sys/class/devfreq/13000000.mali/min_freq" ] && echo "950000000" > /sys/class/devfreq/13000000.mali/min_freq 2>/dev/null
-[ -f "/sys/kernel/ged/hal/gpu_dvfs_timer" ] && echo "200" > /sys/kernel/ged/hal/gpu_dvfs_timer 2>/dev/null
-
-echo "Animation Overlord applied" >> "$LOG"
+disable_pkg() {
+    if pm list packages | grep -q "$1"; then
+        pm disable-user --user 0 "$1" >/dev/null 2>&1
+    fi
+}
+disable_pkg com.google.android.apps.wellbeing
+disable_pkg com.google.android.apps.tachyon
+disable_pkg com.google.android.gms.location.history
+disable_pkg com.miui.analytics
+disable_pkg com.miui.msa.global
+disable_pkg com.oplus.analytics
+disable_pkg com.facebook.system
+disable_pkg com.facebook.appmanager
+disable_pkg com.transsion.ga
+disable_pkg com.transsion.logtools
 
 (
-    LAST_IRQ=0
-    IDLE_COUNT=0
-    IS_BOOSTED=1
-
-    while true; do
-        CURRENT_IRQ=$(awk '/chipone-tddi/ {sum=0; for(i=2; i<=9; i++) sum+=$i; print sum}' /proc/interrupts 2>/dev/null)
-
-        if [ "$CURRENT_IRQ" != "$LAST_IRQ" ] && [ ! -z "$CURRENT_IRQ" ]; then
-            LAST_IRQ=$CURRENT_IRQ
-            IDLE_COUNT=0
-            
-            if [ "$IS_BOOSTED" -eq 0 ]; then
-                [ -d "/sys/devices/system/cpu/cpufreq/policy0" ] && echo "2000000" > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq 2>/dev/null
-                [ -d "/sys/devices/system/cpu/cpufreq/policy6" ] && echo "2200000" > /sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq 2>/dev/null
-                [ -f "/sys/class/devfreq/13000000.mali/min_freq" ] && echo "950000000" > /sys/class/devfreq/13000000.mali/min_freq 2>/dev/null
-                IS_BOOSTED=1
+    boost_max() {
+        for p in /sys/devices/system/cpu/cpufreq/policy*; do
+            if [ -d "$p" ]; then
+                cat "$p/scaling_max_freq" > "$p/scaling_min_freq" 2>/dev/null
             fi
-            
-            sleep 3
-        else
-            IDLE_COUNT=$((IDLE_COUNT + 1))
-            
-            if [ "$IDLE_COUNT" -ge 4 ]; then
-                if [ "$IS_BOOSTED" -eq 1 ]; then
-                    [ -d "/sys/devices/system/cpu/cpufreq/policy0" ] && echo "500000" > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq 2>/dev/null
-                    [ -d "/sys/devices/system/cpu/cpufreq/policy6" ] && echo "725000" > /sys/devices/system/cpu/cpufreq/policy6/scaling_min_freq 2>/dev/null
-                    [ -f "/sys/class/devfreq/13000000.mali/min_freq" ] && echo "390000000" > /sys/class/devfreq/13000000.mali/min_freq 2>/dev/null
-                    IS_BOOSTED=0
-                fi
-                sleep 2
-                IDLE_COUNT=4
-            else
-                sleep 3
-            fi
-        fi
-    done
-) >/dev/null 2>&1 &
+        done
+        for gpu in /sys/class/devfreq/*mali* /sys/class/devfreq/gpufreq; do
+            [ -f "$gpu/max_freq" ] && cat "$gpu/max_freq" > "$gpu/min_freq" 2>/dev/null
+        done
+    }
 
-sleep 2
-setprop ctl.restart surfaceflinger 2>/dev/null
+    boost_down() {
+        for p in /sys/devices/system/cpu/cpufreq/policy*; do
+            if [ -d "$p" ]; then
+                cat "$p/cpuinfo_min_freq" > "$p/scaling_min_freq" 2>/dev/null
+            fi
+        done
+        for gpu in /sys/class/devfreq/*mali* /sys/class/devfreq/gpufreq; do
+            if [ -f "$gpu/gpuinfo_min_freq" ]; then
+                cat "$gpu/gpuinfo_min_freq" > "$gpu/min_freq" 2>/dev/null
+            elif [ -f "$gpu/min_freq" ]; then
+                echo "0" > "$gpu/min_freq" 2>/dev/null
+            fi
+        done
+    }
+
+    boost_max
+    sleep 3
+    boost_down
+) &
+
+exit 0

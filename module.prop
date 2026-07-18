@@ -1,6 +1,6 @@
 id=fpsgo_killer
 name=Fpsgo Killer & Touch Boost
-version=v1.0
-versionCode=1
+version=v1.6
+versionCode=15
 author=rezzxr
 description=Disables MediaTek fpsgo throttling and overrides uclamp limits to max 1.00 for smooth animations.
